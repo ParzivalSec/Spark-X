@@ -1,1 +1,0 @@
-{"rustc":17566253658865747761,"features":"[]","target":4464392328987284877,"profile":3026933032369683551,"path":1036222786711178230,"deps":[["getopts v0.2.17",8585142113459971030]],"local":[{"MtimeBased":[[1524359149,970564900],".fingerprint\\spark_x-35ce4c6fe39e75da\\dep-bin-spark_x-35ce4c6fe39e75da"]}],"rustflags":["--error-format=json"],"edition":"Edition2015"}
