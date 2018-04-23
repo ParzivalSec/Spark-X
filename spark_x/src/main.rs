@@ -8,8 +8,7 @@ use std::env;
 use getopts::Options;
 use colored::*;
 
-use clock::Clock;
-use bencher::{ Bencher, BenchmarkResults };
+use bencher::{ Bencher };
 
 fn print_spark_x_usage() {
     println!("");
@@ -35,7 +34,6 @@ fn validate_format(format: &str) {
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-    let program = args[0].clone();
 
     let mut opts = Options::new();
     opts.optflag("h", "help", "prints usage informations");

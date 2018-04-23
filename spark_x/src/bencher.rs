@@ -19,6 +19,7 @@ pub struct Bencher<'a> {
 
 impl<'a> Bencher<'a> {
     pub fn new(executable: &'a str, iterations: u32, format: &'a str) -> Self {
+        
         Bencher {
             executable,
             iterations,
@@ -31,11 +32,18 @@ impl<'a> Bencher<'a> {
         use std::process::Command;
         use clock::Clock;
 
+        let mut executable_tokens = self.executable.split_whitespace();
+        let program_name = executable_tokens.next().expect("No program name").clone();
+        let args = executable_tokens.collect::<Vec<&str>>();
+
         let mut clock = Clock::new();
-        for it in 0 .. self.iterations {
+        for _ in 0 .. self.iterations {
             clock.start();
 
-            let process_output = match Command::new(self.executable).output() {
+            let _process_output = match Command::new(program_name)
+                .args(&args)
+                .output()
+            {
                 Ok(process) => { process },
                 Err(err) => panic!(err),
             };
