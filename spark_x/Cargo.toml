@@ -6,3 +6,4 @@ authors = ["ParzivalSec <lukas.vogl12@gmail.com>"]
 [dependencies]
 getopts = "0.2"
 time = "0.1"
+colored = "1.6"

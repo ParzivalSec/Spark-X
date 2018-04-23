@@ -1,14 +1,36 @@
 extern crate getopts;
+extern crate colored;
 
 mod clock;
+mod bencher;
 
 use std::env;
 use getopts::Options;
+use colored::*;
+
 use clock::Clock;
+use bencher::{ Bencher, BenchmarkResults };
 
 fn print_spark_x_usage() {
-    println!("Spark-X : A benchmarking utility");
-    println!("Usage: spark_x.exe ");
+    println!("");
+    println!("{}", "Spark-X : A benchmarking utility".bold());
+    println!("{}", "Usage: spark_x.exe --i NUM_ITERATIONS --f csv|console PATH_TO_EXECUTABLE");
+    println!("{}", "\nOptions:".bold());
+    println!("");
+    println!("{}", "-iterations (--i):    Number of iterations the executable's time is measured and averaged");
+    println!("{}", "-format     (--f):    Format of the output results. Can either be csv or console");
+    println!("{}", "-help       (--h):    Display usage hints");
+}
+
+fn shutdown_with_error(msg: &'static str) -> ! {
+    println!("{} {}", "Error: ".red(), msg.red());
+    panic!(msg);
+}
+
+fn validate_format(format: &str) {
+    if format != "csv" && format != "console" {
+        shutdown_with_error("Specified format is not supported! Please use 'csv' or 'console' instead");
+    }
 }
 
 fn main() {
@@ -25,18 +47,30 @@ fn main() {
         Err(f)  => { panic!(f.to_string()) }
     };
 
-    if matches.opt_present("h") {
-        println!("spark-x.exe --it 1000 --f csv PATH_TO_EXECUTABLE");
+    if matches.opt_present("h") || args.len() == 1 {
+        print_spark_x_usage();
         return;
     }
 
-    let format = matches.opt_str("f").expect("No format provided!");
-    let iterations = match matches.opt_str("i").unwrap().parse::<u32>() {
-        Ok(integer) => { integer },
-        _ => { panic!("Could not parse number of iterations") }
+    let format = match matches.opt_str("f") {
+        Some(format) => { validate_format(&format); format },
+        None => shutdown_with_error("No format provided!"),
     };
 
-    println!("Run EXE {} times and output with format: {}", iterations, format);
+    let iterations = match matches.opt_str("i").unwrap().parse::<u32>() {
+        Ok(integer) => { integer },
+        _ => { shutdown_with_error("Could not parse number of iterations. Only postive numbers are allowed!") }
+    };
+
+    let executable = if matches.free.len() >= 1 {
+        matches.free[0].clone()
+    } else {
+        shutdown_with_error("No executable path provided!");
+    };
+
+    let mut bencher = Bencher::new(&executable, iterations, &format);
+    let results = bencher.run_benchmark().expect("Benchmarking failed!");
+    bencher.print_formatted_results(&results);
 
     return;
 }
