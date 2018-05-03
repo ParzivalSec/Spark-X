@@ -1,7 +1,8 @@
 use colored::*;
+use std::str;
 
 pub struct Duration {
-    pub nanoseconds: u64,
+    pub microseconds: f64,
 }
 
 pub struct BenchmarkResults {
@@ -30,17 +31,13 @@ impl<'a> Bencher<'a> {
 
     pub fn run_benchmark(&mut self) -> Option<BenchmarkResults> {
         use std::process::Command;
-        use clock::Clock;
 
         let mut executable_tokens = self.executable.split_whitespace();
         let program_name = executable_tokens.next().expect("No program name").clone();
         let args = executable_tokens.collect::<Vec<&str>>();
 
-        let mut clock = Clock::new();
         for _ in 0 .. self.iterations {
-            clock.start();
-
-            let _process_output = match Command::new(program_name)
+            let process_output = match Command::new(program_name)
                 .args(&args)
                 .output()
             {
@@ -48,11 +45,11 @@ impl<'a> Bencher<'a> {
                 Err(err) => panic!(err),
             };
 
-            self.results.push(Duration {
-                nanoseconds: clock.get_elapsed_time_ns(),
-            });
-        
-            clock.reset();
+            let measure_output = str::from_utf8(&process_output.stdout).unwrap();
+            let length = measure_output.len();
+            let microseconds = &measure_output[0..length - 1].parse::<f64>().unwrap();
+
+            self.results.push(Duration { microseconds: *microseconds });
         }
 
         Some(BenchmarkResults::new(&self.results))
@@ -63,28 +60,29 @@ impl<'a> Bencher<'a> {
             println!("{};{};{}", results.average.pretty(), results.min.pretty(), results.max.pretty());
         }
         else {
-            let (avg_m, avg_s, avg_ms) = results.average.as_unit_tuple();
-            let (min_m, min_s, min_ms) = results.min.as_unit_tuple();
-            let (max_m, max_s, max_ms) = results.max.as_unit_tuple();
+            let avg_ms = results.average.microseconds;
+            let min_ms = results.min.microseconds;
+            let max_ms = results.max.microseconds;
 
             println!("");
             println!("{}", "Benchmark results: ".green().bold());
             println!("----------------------------------------");
-            println!("{}", format!("Average time: {} minutes, {} seconds, {} milliseconds", avg_m, avg_s, avg_ms));
-            println!("{}", format!("Minimum time: {} minutes, {} seconds, {} milliseconds", min_m, min_s, min_ms));
-            println!("{}", format!("Maximum time: {} minutes, {} seconds, {} milliseconds", max_m, max_s, max_ms));
+            println!("{}", format!("Average time: {:.3} mircoseconds", avg_ms));
+            println!("{}", format!("Minimum time: {:.3} mircoseconds", min_ms));
+            println!("{}", format!("Maximum time: {:.3} mircoseconds", max_ms));
+        
         }
     }
 }
 
 impl BenchmarkResults {
     fn new(measurements: &Vec<Duration>) -> BenchmarkResults {
-        use std::u64;
+        use std::f64;
 
-        let mut results: (u64, u64, u64) = (0, u64::MAX, u64::MIN);
+        let mut results: (f64, f64, f64) = (0.0, f64::MAX, f64::MIN);
 
         for idx in 0 .. measurements.len() {
-            let dur = measurements[idx].nanoseconds;
+            let dur = measurements[idx].microseconds;
 
             results.0 += dur;
             
@@ -92,7 +90,7 @@ impl BenchmarkResults {
             if dur > results.2 { results.2 = dur } 
         }
 
-        results.0 /= measurements.len() as u64;
+        results.0 /= measurements.len() as f64;
 
         BenchmarkResults {
             average: Duration::new(results.0),
@@ -103,29 +101,11 @@ impl BenchmarkResults {
 }
 
 impl Duration {
-    pub fn new(nanoseconds: u64) -> Self {
-        Duration { nanoseconds }
-    }
-
-    pub fn as_unit_tuple(&self) -> (u64, u64, u64) {
-        let mut total_ns = self.nanoseconds;
-
-        let ns_without_minutes = total_ns % 60000000000;
-        let minutes = (total_ns - ns_without_minutes) / 60000000000;
-        total_ns = ns_without_minutes;
-
-        let ns_without_seconds = total_ns % 1000000000;
-        let seconds = (total_ns - ns_without_seconds) / 1000000000;
-        total_ns = ns_without_seconds;
-
-        let ns_without_milliseconds = total_ns % 1000000;
-        let milliseconds = (total_ns - ns_without_milliseconds) / 1000000;
-
-        (minutes, seconds, milliseconds)
+    pub fn new(microseconds: f64) -> Self {
+        Duration { microseconds }
     }
 
     pub fn pretty(&self) -> String {        
-        let (minutes, seconds, milliseconds) = self.as_unit_tuple();
-        format!("{}:{}.{}", minutes, seconds, milliseconds)
+        format!("{:.3}", self.microseconds)
     }
 }

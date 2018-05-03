@@ -1,7 +1,6 @@
 extern crate getopts;
 extern crate colored;
 
-mod clock;
 mod bencher;
 
 use std::env;
