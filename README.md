@@ -1,18 +1,12 @@
-#Spark-X - A small tool to measure an executable's execution time
+# Spark-X - A small tool to measurement tool
 
-## Why Spark-X and not just using a simple clock?
+## Why Spark-X?
 
-Spark-X was created out of the need for a possibility to run cross-language benchmarks. Due to the need of reliable and comparable times a way has to be found to
-measure and compare the runtime costs of applications created in different languages. To fulfill this purpose, all executables participating in the benchmarks need
-to be measured with the exact same clock. To ensure this and to provide reliable results, Spark-X allows to specify which executable to measure and how the time
-shall be taken for its execution duration. 
+In order to automate the benchmark process and to run benchmarks multiple times, Spark-X was created to fullfill this purpose. Spark-X is able to collect timestamps emitted by run executables and accumulate the results to create averaged/min/max benchmark results.
 
 ## How does it work?
 
-Spark-X receives the executable to measure as a command-line parameter and cann take a list of parameters that it will feed to the executable upon calling it. This is 
-needed to enable the measured binary to accept parameters (in the context of the Spark project, both benchmark applications need the id of the test scenario as a command-line parameter).
-Spark-X then uses a high-performance clock inernally to measure the time the executable needs till termination. the user can also specify the number of iterations, which will then
-call the binary N times and returning the average, min and max measured time.
+Spark-X receives the executable to measure as a command-line parameter and can take a list of parameters that it will feed to the executable upon calling it. This is needed to enable the measured binary to accept parameters (in the context of the Spark project, both benchmark applications need the id of the test scenario as a command-line parameter). The executed binary has to emit the measurement results in mircoseconds on the standard output. Spark-X will collect these times and accumulate them, creating averaged, min and max benchmark results. By providing the *--i* parameter the user can specify how often Spark-X runs the executable before emitting results. 
 
 ## How are the results formatted?
 
